@@ -1,0 +1,644 @@
+(function() {
+
+  var UST_NAME = 'dx_upx_0D9fLVJYgO.js';
+  var CONSENT_PARAMETER = 'cs';
+  var urlMap, paramsURLMap, hashURLMap, partialMap;
+
+  /** get the value of any key passed to a query string that links this script *
+   *  E.G <script type='text/javascript'
+   *  src='cti.w55c.net/ct/dx_upx_0DAbt8AQLM.js?dx_UST_stage=TD_[stage]&dx_UST_model=[model]'></script>
+   */
+  var getScriptLinkQueryParameters = function (name) {
+
+    var scripts = document.getElementsByTagName('script');
+    var dxScript = '';
+    var scriptTokens = [];
+
+    for (var i = 0; i < scripts.length; i++) {
+      if (scripts[i].src && scripts[i].src.indexOf(UST_NAME) > -1) {
+        dxScript = scripts[i];
+
+        scriptTokens = dxScript.src.split('?');
+
+        if (scriptTokens.length > 1) {
+          break;
+        }
+      }
+    }
+
+    if (dxScript === '' || scriptTokens.length < 2) {
+      return '';
+    }
+
+    var scriptQueryString = scriptTokens[1];
+    var queryStringValues = scriptQueryString.split('&');
+
+    for (var j = 0; j < queryStringValues.length; j++) {
+      if (queryStringValues[j].toLowerCase().indexOf(name.toLowerCase()) !== -1) {
+        return queryStringValues[j].split('=')[1];
+      }
+    }
+
+    return '';
+  };
+
+  var getUSPS = function() {
+    var uspsConsentString = '';
+
+    var ccpaCallback = function (uspData, success) {
+      if (success) {
+        uspsConsentString = uspData.uspString;
+      }
+    };
+
+    // Get CCPA consent string if API is available
+    if (typeof __uspapi === typeof(Function)) {
+      __uspapi('getUSPData', 1, ccpaCallback);  // jshint ignore:line
+    }
+
+    return uspsConsentString;
+  };
+
+  var firePixel = function (pixelIds) {
+    if (pixelIds === '') {
+      return;
+    }
+    var consentStringValue = getScriptLinkQueryParameters(CONSENT_PARAMETER);
+    var uspsConsentString = getUSPS();
+    var dxDomain = '//tags.w55c.net/rs?id=';
+    var pixels = pixelIds.split(',');
+
+    for (var i = 0; i < pixels.length; i++) {
+      var dxPixelId = pixels[i];
+      var cb = Math.floor(Math.random() * 99999);
+      var pixelSrc = dxDomain + dxPixelId + '&rnd=' + cb;
+
+      if (consentStringValue !== '') {
+        pixelSrc += '&cs=' + consentStringValue;
+      }
+
+      if (uspsConsentString !== '') {
+        pixelSrc += '&us_privacy=' + uspsConsentString;
+      }
+
+      var img = document.createElement('img');
+      img.src = pixelSrc;
+    }
+  };
+
+  var normalizeUrl = function (normURL) {
+    var replacedURL = normURL.replace(/^https?:\/\//, '');
+
+    if (replacedURL.substr(-1) === '/') {
+      replacedURL = replacedURL.substr(0, replacedURL.length - 1);
+    }
+
+    return replacedURL;
+  };
+
+  /* Main function to fire pixel based on matching the current URL to the URL Map */
+  var dxUpx = function () {
+    // This represents a list of pixel ids to fire.  The default is the diagnostic pixel.
+    var dxPixelIds = '43b4a141ef044c569738c06926805fd2';
+    var normalizedUrl = normalizeUrl(window.location.host + window.location.pathname);
+    var normalizedUrlParams = normalizeUrl(window.location.host + window.location.pathname + window.location.search);
+    var normalizedUrlHash = normalizeUrl(window.location.host + window.location.pathname + window.location.hash);
+
+    if (hashURLMap.hasOwnProperty(normalizedUrlHash)) {
+      dxPixelIds = hashURLMap[normalizedUrlHash];
+    } else if (paramsURLMap.hasOwnProperty(normalizedUrlParams)) {
+      // If we find a match, replace the diagnostic pixel with those associated with the URL.
+      dxPixelIds = paramsURLMap[normalizedUrlParams];
+    } else if (urlMap.hasOwnProperty(normalizedUrl)) {
+      // if the diagnostic pixel
+      // If we find a match, replace the diagnostic pixel with those associated with the URL.
+      dxPixelIds = urlMap[normalizedUrl];
+    } else {
+      for (var partial in partialMap) {
+        if (partialMap.hasOwnProperty(partial) && normalizedUrlParams.indexOf(partial) !== -1) {
+          dxPixelIds = partialMap[partial];
+        }
+      }
+    }
+
+    firePixel(dxPixelIds);
+  };
+
+  urlMap = {
+    /*jshint ignore:start */
+    /*jshint ignore:end */
+    'www.salesforce.com/fr': '0dcebb41d8be49b5b53aba20c8bd039b',
+    'www.salesforce.com/fr/form/pdf/manufacturing-guide': 'ca0e4e1b8ac54cf09e0ee819d1d2dfae',
+    'www.salesforce.com/fr/form/pdf/fintech-ebook': '024f5d71ffc5421796a08606f3c4bfb8',
+    'www.salesforce.com/fr/form/pdf/wealth-management-ebook': 'a3b90a854a1a4f1386e092e5a80ab925',
+    'www.salesforce.com/fr/form/pdf/start-up-rising-star-ebook': '1a4915441332422b9d6f12cd21f9affa',
+    'www.salesforce.com/fr/form/pdf/SMB-guide-E-book': '3c41fb72533548f68f7449009ed58322',
+    'www.salesforce.com/fr/form/conf/manufacturing-guide': '8d2b68ce5e4e4785be4afd35894ef517',
+    'www.salesforce.com/fr/form/conf/fintech-ebook': 'd32d8716e3724755b462b1657cd7a21b',
+    'www.salesforce.com/fr/form/conf/SMB-guide-E-book': '811a460ca7cf43f69986c46bd075cce7',
+    'www.salesforce.com/fr/form/conf/wealth-management-ebook': '60e766e84b314d719dd4bc55a3b8e58c',
+    'www.salesforce.com/fr/form/conf/start-up-rising-star-ebook': '16de0bc2d7494d56aff50426992706a8',
+    'www.salesforce.com/fr/form/pdf/state-of-sales': '3e58fa7213764cda91a22084ee9dd864',
+    'www.salesforce.com/fr/form/pdf/consumer-goods-guide': 'f3213dc9768248f3b149e84cb3594b4f',
+    'www.salesforce.com/fr/form/pdf/quest-of-growth': '2a69429d6bc04274b6a16b74c2862ead',
+    'www.salesforce.com/fr/form/conf/state-of-marketing': 'f2fec9cd85e44001beb12d70c406b0c6',
+    'www.salesforce.com/fr/form/conf/state-of-sales': '0066d3156ed141dbb770c2d34ccaedd0',
+    'www.salesforce.com/fr/form/conf/sales-process': 'fc0fbb9160b14cac9282d3bb1e7fae55',
+    'www.salesforce.com/fr/form/conf/consumer-goods-guide': '018a5ea815f0402fa915faee83b6e820',
+    'www.salesforce.com/fr/form/conf/quest-of-growth': 'd97dc4d86d2741629a2c5357f65fec78',
+    'www.salesforce.com/fr/form/conf/state-of-connected-customer': '95c3b78321e7491c82824021dabcec55',
+    'www.salesforce.com/fr/products/what-is-salesforce': '884f8230540e4d77adf93c23c3c70b06',
+    'www.salesforce.com/fr/form/conf/contactme': '00e1ea6e3bac4c159fc555771da967d5',
+    'eu29.lightning.force.com/lightning/page/home': 'ea97bbe36df04227a5189861e6ac7fae',
+    'www.salesforce.com/de/blog/nah/ausgabe-8/redi-school.html': 'b95965c4f8cd40e0af81a1b53a08a14d',
+    'www.salesforce.com/de/blog/nah/ausgabe-8/wefox.html': '2258d115c0a24889b07dfceb77cf035a',
+    'www.salesforce.com/de/blog/nah/ausgabe-8/tiffani-bova.html': '327e63d4846744808130e1e2ec50b51c',
+    'www.salesforce.com/de/blog/nah/ausgabe-8/1-fc-koeln-e-sports.html': 'ca08c2cfd9364b308187560f11387bcf',
+    'www.salesforce.com/de/products/what-is-salesforce': 'b3dafaca3071487baab152e8e688a216',
+    'www.salesforce.com/de': 'a6b231ff656a4991b05be823b32d75b0',
+    'www.salesforce.com/form/demo/small-business/smb-overview': '308e6621572e479aaf5616c4b5112439',
+    'www.salesforce.com/fr/solutions/by-role/salesforce-for-service': '421c49d42b5b475fb0ccbd65c13ef2c2',
+    'www.salesforce.com/fr/form/conf/2016-state-of-sales': '7468044f695f4ccaa6648ed6241cc4b0',
+    'www.salesforce.com/fr/form/conf/guide-du-service-client-conversationnel': 'fad4ff8d2422465f823dac6b98e9fa02',
+    'www.salesforce.com/fr/form/conf/customer-trailblazer-field-guide-to-marketing': 'eac6da0482274ca5aa26216ca19c10eb',
+    'www.salesforce.com/fr/form/conf/accelerateur-de-business': '4e1d10e90fcc4561a27f8340c02d81fd',
+    'www.salesforce.com/fr/form/demo/conf/demo-commerce': '380e6ed2d6844d93b4749e05c01ce68f',
+    'www.salesforce.com/fr/events/conf/webinars/2388137': '3b6642a2188540b2b6b28affafdc02f0',
+    'www.salesforce.com/de/form/event/salesforce-care': '2e2685836b2941998be14ec9e2679b8c',
+    'www.salesforce.com/fr/solutions/small-business-solutions/essentials': 'cf47546bf8b64b2386d22b2bd21d273f',
+    'www.salesforce.com/fr/form/demo/demo-small-business': '067859edcbca4741860cda8b5472b46b',
+    'www.salesforce.com/fr/form/signup/freetrial-sales-essentials': '6a05f0c8e1a340f7837a2715cce9f0a1',
+    'www.salesforce.com/de/solutions/industries': '050506a21cd6422bbb727747e004826c',
+    'www.salesforce.com/de/solutions/industries/manufacturing/overview': '4610d5b2069143a0bffeefb7f731c4fa',
+    'www.salesforce.com/de/solutions/industries/automotive/overview': '31df244891e54529ad0a1849cf721cbf',
+    'www.salesforce.com/de/solutions/industries/consumer-goods/overview': '09d547db0bad4ff2ae7fe53d3409f025',
+    'www.salesforce.com/de/solutions/industries/healthcare/overview': '7717b70f691848dd922cdc1c05dd1696',
+    'www.salesforce.com/de/solutions/industries/media/overview': '9cfc4c076d8d4a75a7214793bb72fb08',
+    'www.salesforce.com/de/solutions/industries/communications/overview': '75870da507b54f2880f32b2ac895a359',
+    'www.salesforce.com/de/solutions/industries/logistics/overview': 'eaecb00e44964db6b44ffd5289ccb7bf',
+    'www.salesforce.com/de/solutions/industries/nonprofit/overview': '574376f342aa4568bd47c9f7fc1e23ad',
+    'www.salesforce.com/de/solutions/industries/utilities/overview': 'fed6cfc7d6f84eefb72eefafbb020342',
+    'www.salesforce.com/de/solutions/industries/travel-hospitality/overview': '0b7a37a0d2f441aca8b99ba1146bd810',
+    'www.salesforce.com/de/solutions/mittelstand/overview': 'be4df6630e3c4ccb84e5b40f4908d161',
+    'www.salesforce.com/de/products': '2bba788356b04c778ea67c173d01a97a',
+    'www.salesforce.com/de/solutions/by-role/salesforce-for-sales': '2040c1c3f7c843678d7e1050576eb4be',
+    'www.salesforce.com/de/solutions/by-role/salesforce-for-service': '47d3a3cf61c84bda89cfeda458c1c748',
+    'www.salesforce.com/de/solutions/by-role/salesforce-for-it': '2e73514279bf4da3bc44c72db89dffbb',
+    'www.salesforce.com/de/products/einstein/overview': 'fb20b90d903c48b598fe854ae5b3c1c8',
+    'www.salesforce.com/de/solutions/mobile/overview': 'a315f76a6bbe4cfc8e5393398ab3e3f8',
+    'www.salesforce.com/de/products/quip/overview': '231c282baeb6425789b26441fc026e70',
+    'www.salesforce.com/de/campaign/sem/worlds-number-one-CRM': 'e50f7acdd5fa4220b0771e85928dc58c',
+    'www.salesforce.com/fr/solutions/industries': '333e800f4fbd46a0b95f942e4788c19d',
+    'www.salesforce.com/fr/solutions/industries/manufacturing/overview': '8861576295b44ca18d35bc6c8c22d000',
+    'www.salesforce.com/fr/solutions/industries/financial-services/overview': 'dbfbffa90e314769b8764fabe6e03d64',
+    'www.salesforce.com/fr/solutions/industries/automotive/overview': 'fde6febb3bb64691bac259d1adf60436',
+    'www.salesforce.com/fr/solutions/industries/retail/overview': '6f724935133b4099a27cddb676877f35',
+    'www.salesforce.com/fr/solutions/industries/communications/overview': '9eec05cf7e8944cab8b8ffa3addbe4a6',
+    'www.salesforce.com/fr/solutions/industries/nonprofit/overview': '6c85e5dc8aaf4e95bc1f935d8337fdfc',
+    'www.salesforce.com/solutions/salesforce-for-startups/overview': '909172ba99d14fea9def14958c79582e',
+    'www.salesforce.com/fr/solutions/covid-19-response/overview': '732b4dbc24604d138725088396d8eef2',
+    'www.salesforce.com/fr/products/einstein/overview': '7d9da586619840e59dd24185cf50c807',
+    'www.salesforce.com/fr/solutions/mobile/overview': '79402c5eb2d84514bb27b051287b7844',
+    'www.salesforce.com/fr/products/quip/overview': '9e868a7ba21446bda6a9f21dfc08c7ad',
+    'www.salesforce.com/fr/blog': '3830182734ed4fc887f6633e30487de9',
+    'www.salesforce.com/fr/products': '44a8b6e95d164fe38c6d74f759576c29',
+    'www.salesforce.com/fr/campaign/sem/salesforce-products': '27285d93730d4bfb939c4c984f9372d2',
+    'www.salesforce.com/fr/campaign/sem/service-cloud': 'fef98d4f9ec5454d949510b64e775196',
+    'www.salesforce.com/fr/cro/sem/salesforce-products': 'd98b3d41227d46ea9b9bfdf4046ac1ed',
+    'www.salesforce.com/fr/cro/sem/sales-cloud': 'a5a61e5ff5bf453fb9cfda2cfe05234d',
+    'www.salesforce.com/uk/solutions/by-role/salesforce-for-sales': '7cfd635751174371a5f64add3125eecc',
+    'www.salesforce.com/uk/solutions/by-role/salesforce-for-service': 'bdadb7cb2ced4f6f9158006e67329ffd',
+    'www.salesforce.com/uk/solutions/by-role/salesforce-for-marketing': 'd9694fe3195f40269dd119989b57e520',
+    'www.salesforce.com/uk/solutions/by-role/salesforce-for-it': '1f93328512784393a8446f2598c125a1',
+    'www.salesforce.com/uk/blog/category/small-business.html': 'c83f9d04416c40048a990498ae7ea257',
+    'www.salesforce.com/eu/events/salesforce-live-israel': '590cdfd1b3b6482caba9282d22cb275d',
+    'www.salesforce.com/eu/form/event/conf/salesforce-live-israel': '236277b475984c8e84f79d48fa7354d0',
+    'www.salesforce.com/it/events/salesforce-live-italy': '6ddf69b5a68d4a018b8c480825df32fe',
+    'www.salesforce.com/es': 'a595c18721d34494a43b283b5a83e3b7',
+    'www.salesforce.com/nl': '03a2da7b7ce84591b1cf1fd6a7c1cf7b,684086e5e53c49fd8cb2c8de8664bcdb',
+    'www.salesforce.com/se': '59b2c9fa595e4d96953476099d244b39,94427b7026a844329e3ccc1e708a2e27',
+    'www.salesforce.com/dk': '88f1c56f38194984b571ffac5ded2a40,93b6410deaa94e0ca97e189506ab43e6',
+    'www.salesforce.com/fi': 'ab4ae95de20a4a37930c0add6c1f3fe9'
+  };
+
+  paramsURLMap = {
+    /*jshint ignore:start */
+    'www.salesforce.com/fr/blog/2020/04/pme-conseils-soutenir-vos-clients-contexte-actuel.html': 'a3b8b5f3e9b9491a8cb89657e819c0e6',
+    'www.salesforce.com/fr/blog/2020/04/crm-pme-allie-indispensable-relation-client.html': 'e59ada2c50b84b769cb53e4ccf93d1cb',
+    'www.salesforce.com/fr/blog/2020/02/principaux-obstacles-des-femmes-entrepreneures.html': '286fd756d88e4ca4bcf7c618052b6686',
+    'www.salesforce.com/fr/blog/2020/01/financement-des-PME-3-conseils-avant-de-se-lancer.html': '18a087c8aa094657b42ee58b19a3886e',
+    'www.salesforce.com/fr/blog/2020/01/PME-les-3-tendances-sur-lesquelles-miser-en-2020.html': 'c773402565fb4ec6b9067e18d9d30ccc',
+    'www.salesforce.com/fr/blog/2020/06/pme-conseils-renforcer-empathie-relation-client.html': '83f0f44233df45d298684998649bbb03',
+    /*jshint ignore:end */
+    'www.salesforce.com/fr/blog/2020/07/comment-batir-equipe-commerciale-pme.html': '1990c0d8add546f7a958748f7d3c66bd',
+    'www.salesforce.com/fr/resources/guides/covid19-response-playbook': 'b84d15808a264b769c56adffe02ecc07',
+    'www.salesforce.com/fr/blog/2020/05/5-etapes-argumentaire-email.html': 'd41863590a5b48b6b79331fcff0a0acb',
+    'www.salesforce.com/fr/form/signup/freetrial-sales-pe': 'd7aadc6414044bd2b6383b79d64d7605',
+    'www.salesforce.com/fr/form/demo/sales/essentials': 'a2a07b393c6c48bc9f75a8247a455fbf',
+    'www.salesforce.com/il/blog': 'a09dd971dbe04909ab032d06a39542d6',
+    'www.salesforce.com/nl': '39ca15d9d62a47c3a638679bcd3c9987',
+    'www.salesforce.com/nl/solutions/industries': '34291dbfb46942c6b41a9888df034208',
+    'www.salesforce.com/nl/solutions/industries/manufacturing/overview': '1d805c0a149b4b72b8e705211859dbff',
+    'www.salesforce.com/nl/solutions/industries/financial-services/overview': 'bd791b64c6114ad69130edf013539488',
+    'www.salesforce.com/nl/solutions/industries/healthcare/overview': '47c9475abc7346af9e0759cd0c8fe9de',
+    'www.salesforce.com/nl/solutions/industries/retail/overview': 'fd0d3ea5b3ea469c9d123fbdeaabbfbb',
+    'www.salesforce.com/nl/solutions/industries/communications/overview': 'feef4153837b4cf89865cee1ba733067',
+    'www.salesforce.com/nl/solutions/industries/nonprofit/overview': '5a32e7a2f752439cb77b864d6086b7d7',
+    'www.salesforce.com/nl/solutions/small-business-solutions/overview': '22a3b796a6c34dd9b008640b2d7e5e99',
+    'www.salesforce.com/solutions/salesforce-for-startups/overview': '68fae4de1d9e463f93239f97a2cd2e32',
+    'www.salesforce.com/nl/solutions/by-role/salesforce-for-sales': 'db9b57706d0f493290ac986942464e91',
+    'www.salesforce.com/nl/solutions/by-role/salesforce-for-service': '5ae3c83be7dd4fe5a36425cd5a11e25d',
+    'www.salesforce.com/nl/solutions/by-role/salesforce-for-marketing': '89e6867809ed46d092882a1f891a513c',
+    'www.salesforce.com/nl/solutions/by-role/salesforce-for-it': '237319de1d734c038391a72609072016',
+    'www.salesforce.com/nl/solutions/covid-19-response/overview': '9d13192ff13344128fd5bbdbae33681c',
+    'www.salesforce.com/nl/products/einstein/overview': 'd93fe21414554de69d054b0fa68c9050',
+    'www.salesforce.com/nl/solutions/mobile/overview': '65f4d3d9acf74cb0bde5fdd8932606fb',
+    'www.salesforce.com/nl/products/quip/overview': '447e51a9265740b8b6692f88867ff835',
+    'www.salesforce.com/nl/blog': '38da5384669b40ada7638d7c9defeb4f',
+    'www.salesforce.com/nl/products': '2c1e7d5dc257479db4054e02cad21c71',
+    'www.salesforce.com/nl/campaign/sem/salesforce-products': '460904ec9bc24bff8a9aafb924176559',
+    'www.salesforce.com/nl/campaign/sem/sales-cloud': '99b23ecefea64673997424d15d116499',
+    'www.salesforce.com/nl/campaign/sem/service-cloud': '844564d419d043ea9a9a237830ed99fc',
+    'www.salesforce.com/nl/cro/sem/sales-cloud': 'f98cf4adba3d439da49eb98c57dcc4bd',
+    'www.salesforce.com/nl/cro/sem/salesforce-products-v2': 'c4c510aa7d9546028618d532e62af718',
+    'www.salesforce.com/nl/cro/sem/salesforce-products': '405f9fd37a76462ca07181c8cc502bb1'
+  };
+
+  hashURLMap = {
+    'www.salesforce.com/fr/resources/small-business/#!page=1': 'aefe6cafadd4438384748d43a1f15b8c'
+  };
+
+  partialMap = {
+    /*jshint ignore:start */
+    'www.salesforce.com/eu/form/commerce/conf/how-to-jumpstart-growth-in-commerce': '38b59042fd60456db5be1a1b243a7ab9',
+    'www.salesforce.com/de/blog/nah/ausgabe-9/gesellschaftliches-engagement-salesforce.html': 'a915cc402452407aaa163a1550c0c1e4',
+    'www.salesforce.com/de/blog/nah/ausgabe-9/gegen-hunger-weltweit-un-wfp-innovation-accelerator.html': '2f2677ec795840be9e7fe76678ba7bfe',
+    'www.salesforce.com/fr/blog/2016/05/5-techniques-de-vente-que-tout-commercial-doit-connaitre.html': 'a75bf787a1d14786990edc9c903edf83',
+    'www.salesforce.com/fr/blog/2020/08/comment-elaborer-plan-d-action-commercial.html': '69d73cfea1dc4c49a0c8c8ecc84078ba',
+    'www.salesforce.com/fr/blog/2020/07/4-verites-a-connaitre-sur-les-previsions-des-ventes.html': '954d1c8ac93c43e696b2b668e59f4336',
+    'www.salesforce.com/fr/blog/2019/03/optimiser-votre-cycle-de-vente-en-7-etapes-.html': '79ac37e664d34af6a5ea6e118b148286',
+    'www.salesforce.com/fr/products/sales-cloud/features/contact-management-software': '14d927b2fb9d4e86b1e12225767d65f6',
+    'www.salesforce.com/fr/products/sales-cloud/features/opportunity-pipeline-management': '38529fe30e554541aee0d773eaf970a8',
+    'www.salesforce.com/fr/products/sales-cloud/features/marketing-lead-tracking-solutions': 'b915b9eda44348ef84e8b64257fe9cc8',
+    'www.salesforce.com/fr/products/sales-cloud/features/analytics-reporting': '7d06be82c64c4e34862c45c8bab4252e',
+    'www.salesforce.com/fr/products/sales-cloud/features/quota-forecasting-software': '8622bbea9c57416886a4e9527b9b1ce6',
+    'www.salesforce.com/fr/products/sales-cloud/features/sales-collaboration-software': '41da8f341995410783eae4fa02e90cab',
+    'www.salesforce.com/fr/blog/2020/09/comment-ameliorer-competences-service-client.html': '61b69441344a437f95470586d58b04de',
+    'www.salesforce.com/fr/blog/2020/09/impact-chatbot-sur-experience-client.html': 'ac39d108ea594321a800cc3f351da4d4',
+    'www.salesforce.com/fr/blog/2020/07/automatisation-service-client-gestion-requetes.html': 'a751c7103a1045a1ba5348e748178f2c',
+    'www.salesforce.com/fr/blog/2020/04/service-client-proposer-information-actualisee-clients.html': '2e9dfd5982f84303a0bd62aef7caa166',
+    'www.salesforce.com/fr/blog/2019/10/3-conseils-pour-creer-le-service-client-de-vos-reves.html': '9a39588f46de46529695c3582305276c',
+    'www.salesforce.com/fr/blog/2017/07/parcours-client---ameliorez-l-experience-en-7-etapes.html': 'acf8b05897ca4a2798fb304430e9bea7',
+    'www.salesforce.com/fr/blog/2016/02/comment-mieux-fideliser-vos-clients-en-6-astuces': '29bea02b5ea74136abebd925893bbb10',
+    'www.salesforce.com/fr/products/service-cloud/features/service-agent-console': 'aa3723185cb84346bd956b7e079ca76e',
+    'www.salesforce.com/fr/products/service-cloud/features/case-management-software': 'a00d90689f2b42f6b84225228d7f5c9b',
+    'www.salesforce.com/fr/products/service-cloud/features/automated-customer-service': 'a34b7290722649fda764de79582009f0',
+    'www.salesforce.com/fr/products/service-cloud/features/computer-telephony-integration': 'd525fd9983734ca197f4bec09d8e8cc8',
+    'www.salesforce.com/fr/blog/2020/09/panier-abandonne-meilleures-techniques-et-exemples-de-relance.html': '7d0121976a694cdd9cd3fc517c6147e0',
+    'www.salesforce.com/fr/blog/2020/09/omnicanalite-5-fonctionnalites-pour-ameliorer-service-et-relation-client.html': 'deeb40730997498c97c0bfa6d9c68dea',
+    'www.salesforce.com/fr/blog/2020/06/3-techniques-pour-augmenter-taux-conversion-site-e-commerce.html': 'a1a0eacba9064df88084334bab699339',
+    'www.salesforce.com/fr/blog/2020/06/ecommerce-conseils-optimiser-tunnel-de-conversion.html': '1f6968fd492244ef898a030d4853d9d9',
+    'www.salesforce.com/fr/blog/2020/08/zoom-video-innovation-industries-future-technology.html': '98069e9c77694953ad0e64cda532c93d',
+    'www.salesforce.com/fr/blog/2020/05/simplifier-experience-client-contexte-actuel.html': '0af2b0beb9d34b0c9308d24f9c973041',
+    'www.salesforce.com/fr/blog/2020/04/5-mesures-aider-collaborateurs-travail-distance.html': '225367d92feb4acb8f3a925f7db28b21',
+    'www.salesforce.com/fr/blog/2020/01/3-regles-pour-devenir-une-entreprise-data-driven.html': '5bc77298512d4514885456849bcd0b09',
+    'www.salesforce.com/fr/blog/2019/12/creer-un-chatbot-grace-a-l-intelligence-artificielle.html': 'b81dbad863f1499492ae5b715fef0888',
+    'www.salesforce.com/fr/form/pdf/state-of-connected-customer': '0365f07c5e6946d8a1be3e6b4d87ee39,56b580b0ed424e3382b91ed51684ab79',
+    'www.salesforce.com/eu/form/pdf/3rd-state-of-service/?d=7013y000002JwLLAA0&nc=7013y000002JwLQAA0&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_3rd-state-of-service+7013y000002jwllaa0': 'e8716a2ec688491baca10af7b48bf9ce',
+    'www.salesforce.com/eu/form/pdf/navigating-the-sales-process/?d=7013y000002JwLVAA0&nc=7013y000002JwLaAAK&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_navigating-the-sales-process+7013y000002jwlvaa0': 'd6bc63defc9c4bd88523e3f89e650499',
+    'www.salesforce.com/eu/form/pdf/6th-state-of-marketing/?d=7013y000002JwLMAA0&nc=7013y000002JwLWAA0&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_6th-state-of-marketing+7013y000002jwlmaa0': '33d17bf77039478cb567e0bbd3c0596a',
+    'www.salesforce.com/eu/form/commerce/value-of-digital/?d=7013y000002JwLfAAK&nc=7013y000002JwLNAA0&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_value-of-digital+7013y000002jwlfaak': '3c74c94ffbaa46a89b059444b55647a0',
+    'www.salesforce.com/eu/form/pdf/state-of-the-connected-customer-3rd-edition/?d=7013y000002JwLkAAK&nc=7013y000002JwLpAAK&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_state-of-the-connected-customer-3rd-edition+7013y000002jwlkaak': 'a60e8e3c689e420faf41cdbc5fb16fa5',
+    'www.salesforce.com/eu/form/commerce/how-to-jumpstart-growth-in-commerce/?d=7013y000002JwLuAAK&nc=7013y000002JwLzAAK&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_how-to-jumpstart-growth-in-commerce +7013y000002jwluaak': '3014862d42d940ad99860e140ccf2fee',
+    'www.salesforce.com/eu/form/commerce/b2b-commerce-demo/?ve=g-recaptcha-response': 'b9e7924ebd044e0ba3ee715c1fd9f987',
+    'www.salesforce.com/eu/form/commerce/forrester-b2b-commerce/?ve=g-recaptcha-response': 'b274be9366c4477cb9071316443d1b74',
+    'www.salesforce.com/eu/form/commerce/commerce-cloud-digital-demo/?d=cta-header-5': '70f9b1c1b5864321a210ecbf5b83c207',
+    'www.salesforce.com/eu/campaign/quick-start-commerce-solutions/?d=7013y000002JwM4AAK&utm_source=dataxu&utm_medium=display&utm_campaign=emea+no+alllobcon_gtm&utm_content=dcs+ebook_quick-start-commerce-solutions+7013y000002jwm4aak': '43b8f48c6de74d84a12c1e549100411d',
+    'www.salesforce.com/eu/events/conf/webinars/2455446': 'dc97fb111c02467094aec4a996d1a82a',
+    'www.salesforce.com/eu/events/conf/webinars/2455242': '9bca5d5176c74ad1aedf6b8dce46ff38',
+    'www.salesforce.com/eu/events/conf/webinars/2455453': '35df7538637749eda00d602bbe495174',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2455463': '1935daa8b13f414680dada864da4ad78',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2455446': '623d9f7459eb45878bf02f2112388f30',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2455242': '4107f2ee64d3407b9720a6076731ef95',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2455453': 'cc4bbf066b5445ed81491a20300c674f',
+    'www.salesforce.com/eu/form/commerce/conf/value-of-digital': 'bd4137cfeaf74cc9bcf8a1c442d7d40e',
+    'www.salesforce.com/eu/form/conf/3rd-state-of-service': '0339b45c169a473f8c2540c0cdd26168',
+    'www.salesforce.com/eu/form/conf/6th-state-of-marketing': '7280ff4530ff49bc9831bc0c1f39d629',
+    'www.salesforce.com/eu/form/conf/navigating-the-sales-process': 'd963176d7c1d4c43b7194af3c4973636',
+    'www.salesforce.com/eu/form/conf/state-of-the-connected-customer-3rd-edition': 'c6de409b47204787ab3865746e92b8a4',
+    'www.salesforce.com/eu/form/pdf/state-of-the-connected-customer-3rd-edition': '482c9f2e384c4643b87e59002b0dcb81',
+    'www.salesforce.com/eu/form/commerce/how-to-jumpstart-growth-in-commerce': 'dc5464b70ee340c2b88a454781c5516b',
+    'www.salesforce.com/fr/solutions/small-business-solutions/overview': 'f4a77aa25343482286d704f5b7c95ee4',
+    'www.salesforce.com/fr/work': 'e439b16e669f4c8c843eaa96ab630a55',
+    'www.salesforce.com/fr/form/events/webinars/form-rss/2388137': '2d11cdb8a5224f4eaf1fbc7499f65485',
+    'www.salesforce.com/eu/form/event/salesforce-live-middle-east-africa/register': '6143d0ebc046464caa3a4bcab2aac08e',
+    'www.salesforce.com/eu/events/salesforce-live-cee': '1a8e648802be4a1db1eb3dd21acf23ce',
+    'www.salesforce.com/eu/form/event/salesforce-live-cee/register': '38273a1e6394494980df2c44b860cc49',
+    'www.salesforce.com/eu/form/event/conf/salesforce-live-cee': '783ad7d49b864e2f979d0f5b4d50a807',
+    'www.salesforce.com/eu/events/salesforce-live-middle-east-africa': 'fcd64d830581433b942533fdaca1e703',
+    'www.salesforce.com/de/blog/nah/ausgabe-9/siemens-neue-arbeitswelt.html': 'db3edc36410e40a8a18fec14b25c2b03',
+    'www.salesforce.com/fr/blog/category/sales.html': 'af4b18ad1b17437b9462319301a89056',
+    'www.salesforce.com/fr/blog/2020/09/6-prerequis-devis.html': '1805ac712e114243a93121eb81d22e4c',
+    'www.salesforce.com/fr/blog/2018/09/qu-est-ce-que-l-inside-sales--': 'f4d9031097294cb7ab2c3342e9fe8fd7',
+    'www.salesforce.com/fr/blog/2017/04/portrait-super-vendeur.html': '0bb78a47966a407c88d922e1f942409b',
+    'www.salesforce.com/fr/products/sales-cloud/overview': '93142eab8e314d7aa1e8de535d17b121',
+    'www.salesforce.com/fr/campaign/sem/sales-cloud': 'c06c425072c840848c7bc3b90bac11fd',
+    'www.salesforce.com/fr/form/pdf/sales-process': 'b98162adf3b6489e8739e2d8a3362844',
+    'www.salesforce.com/fr/events/sales-webinar-series': '272086f9aa9642bd8e172b74ccbef077',
+    'www.salesforce.com/fr/products/sales-cloud/features': 'e4823cd43248422ba76fcb825239ae4b',
+    'www.salesforce.com/fr/products/sales-cloud/pricing': '6df460ef13854ecea555a14a6bc5bdde',
+    'www.salesforce.com/fr/customer-success-stories/gazprom-energy': '74c379b7fec8446bb61fc1f30e667c20',
+    'www.salesforce.com/fr/customer-success-stories/doctolib': 'cdd3d128bb974569aa4009caad49b865',
+    'www.salesforce.com/fr/customer-success-stories/alinea': 'c71e5c36b2714ecbad1bfc1c2b665a2b',
+    'www.salesforce.com/fr/customer-success-stories/michelin': 'fc6b5b3581334e188519db8c190a5cd7',
+    'www.salesforce.com/fr/customer-success-stories/cci-bordeaux': 'b949a0fa27f54fb8977957badaeb0402',
+    'www.salesforce.com/fr/customer-success-stories/akeneo': '81e5c54e40b14cec83b32463c22d195f',
+    'www.salesforce.com/fr/resources/sales': '67f2d36f757c4d99aca8bc883525627d',
+    'www.salesforce.com/fr/form/demo/demo-sales': '877e16928ec343d6905910e183b93b47',
+    'www.salesforce.com/fr/form/pdf/state-of-sales': '1fa0aa62fe7d473ca4284042c27b7021',
+    'www.salesforce.com/fr/blog/category/customer-service.html': 'f37564a8d10e454bb8d26562bfcab9a3',
+    'www.salesforce.com/fr/solutions/by-role/salesforce-for-service': '48c2bf8ce5b341dda7eeaa88dd25d70d',
+    'www.salesforce.com/fr/products/service-cloud/overview': 'ee8f1ee81a5e4d07ad1400b64560efef',
+    'www.salesforce.com/fr/campaign/sem/service-cloud': '95b96edcdffd4d9a8f19d0df3d0568bb',
+    'www.salesforce.com/fr/form/pdf/state-of-service': '0706093a155c4eb5b3d93804ae92a982',
+    'www.salesforce.com/fr/events/service-webinar-series': '9d9ffce9dc8b45dca41ab8dbcf3005ba',
+    'www.salesforce.com/fr/products/service-cloud/features': '4e485f88507547fda06865bd351f16e7',
+    'www.salesforce.com/fr/resources/service': '15e95d928560496eb2fb46dd14f4380c',
+    'www.salesforce.com/fr/products/service-cloud/pricing': 'b5c56e49ee2c4276b070d21b330f8cd7',
+    'www.salesforce.com/fr/customer-success-stories/laurastar': 'a0e4da6bc6b2447ea8bfdc6687b07f2d',
+    'www.salesforce.com/fr/customer-success-stories/proprioo': 'de3c5ff2ed354da5a63b916952bce94e',
+    'www.salesforce.com/fr/customer-success-stories/american-express': '5aa66603f7004928aa982d83328e888a',
+    'www.salesforce.com/fr/customer-success-stories/acteon': 'f3b00fae42b24025b5741eff5456d45a',
+    'www.salesforce.com/fr/form/demo/demo-service': 'cb8e9432d3a9405db02db06f85ad21ec',
+    'www.salesforce.com/fr/solutions/by-role/salesforce-for-marketing': 'd402c113fa174babbbba79b79366ee8b',
+    'www.salesforce.com/fr/campaign/sem/marketing-cloud': 'b663a58b88bd4ecf8452118903bb72f2',
+    'www.salesforce.com/fr/form/pdf/state-of-marketing': 'cf41d3e272534ffaa5e54d21535bf6c5',
+    'www.salesforce.com/fr/blog/category/commerce.html': '3832d7e1f5ad42eeb128329cdaf9cf59',
+    'www.salesforce.com/fr/blog/2020/09/creer-rapidement-site-e-commerce-B2B.html': '331fc7fffec44d0bb597ec7e7ee6a2cb',
+    'www.salesforce.com/fr/products/commerce-cloud/overview': 'e37719a29c834826b40b8d08e5f3d2ec',
+    'www.salesforce.com/fr/campaign/sem/commerce-cloud': '7317c737e470424b9428b28b7653dab0',
+    'www.salesforce.com/fr/products/commerce-cloud/ecommerce': '2e885d7f28154fc180d4507887a770a2',
+    'www.salesforce.com/fr/products/commerce-cloud/ecommerce/endless-aisle': '84e19765fda0450ca929c6f7fe2c8b4e',
+    'www.salesforce.com/fr/products/commerce-cloud/b2b-ecommerce': '4cba009d3e3d48f9b9659c763b1836a5',
+    'www.salesforce.com/fr/form/commerce/commerce-cloud-digital-demo': '9586370462c242b68d25413f1f3f967a',
+    'www.salesforce.com/fr/form/commerce/b2b-commerce-demo': 'c46e7b3740124218a6212fdcee7615ee',
+    'www.salesforce.com/fr/products/commerce-cloud/pricing': '9e6cce92d88b402db9847d0a73dc70e4',
+    'www.salesforce.com/fr/customer-success-stories/puma': '36c12477d8dd4eadbb1b5ddb4d4ff052',
+    'www.salesforce.com/fr/customer-success-stories/markem-imaje': 'ee9ee8db4989471c906e9aebe776d053',
+    'www.salesforce.com/fr/customer-success-stories/godiva': '743d1c9294394dcf858c18cbfee48fa2',
+    'www.salesforce.com/fr/resources/commerce': 'e5c692e8253e4f1985087c6b09226715',
+    'www.salesforce.com/fr/blog/category/it.html': 'af4ff916afda476cb2e0417dc7dfc08b',
+    'www.salesforce.com/fr/solutions/by-role/salesforce-for-it': 'cf1081506ebe4d73ae5ec109c15b93a6',
+    'www.salesforce.com/fr/products/platform/overview': '5cb158daf1da414d918e173ed9d179f4',
+    'www.salesforce.com/fr/form/pdf/it-guide': '7b9d1e9a01ce41f1a40e04bd07bd1fcc',
+    'www.salesforce.com/fr/form/pdf/guide-du-responsable-it': '9a0f09bf592c45f185c1dc4704bd38f7',
+    'www.salesforce.com/fr/products/platform/solutions': 'ca55c71b3f1f435184f4028666041fee',
+    'www.salesforce.com/fr/products/platform/services': 'b5f8ffaa276245ad8edca761cd9c98cd',
+    'www.salesforce.com/fr/products/platform/products': 'c84571025dc64d80999d15c41a8caaa2',
+    'www.salesforce.com/fr/products/platform/pricing': '6d613d1fd65f44e09465a4ef1d9cdbd6',
+    'www.salesforce.com/fr/resources/app-development': '0b10db2b2e254b62bc76ca370845e251',
+    'www.salesforce.com/fr/form/signup/freetrial-platform': '2f4a967d75494d6db0b5a2f75ce3943b',
+    'www.salesforce.com/fr/form/demo/demo-platform.jsp': '9708f4481e324864a745c90348a1ec8c',
+    'www.salesforce.com/it/form/event/conf/salesforce-live-italy': 'c45eddae9f72461ea0c4e88b041f0124',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2588673': 'e0942e0245c647d183016218221f34c8',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2588761': 'df3703b4b47540009c9454bf1b3db2db',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2588799': 'e86e2e81ecab4dc09343657ec5855f5d',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2588715': 'abc13f466d49481c8fb05f217abcadc7',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2588827': '940a3307a6734d3aa1c98662371ee846',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2588908': 'bef6fa054e8b496c871eca30de2e125d',
+    'www.salesforce.com/eu/events/salesforce-live-switzerland': 'e58a5dc0c91b4dc39e57ffa08923c4b2',
+    'www.salesforce.com/it/form/events/webinars/form-rss/2566018': '96e276fc8ca64eccbad34b68f0a6d3f1',
+    'www.salesforce.com/it/form/events/webinars/form-rss/2624962': '223da8e26d7d4151a7fe2ef09670552d',
+    'www.salesforce.com/it/form/events/webinars/form-rss/2582384': '767ec600cbbf4eeb91cf0842cde875f3',
+    'www.salesforce.com/it/form/events/webinars/form-rss/2582645': '0ea80cb72f8341edb5d31dc38c2dff86',
+    'www.salesforce.com/it/form/events/webinars/form-rss/2582690': '550588ac91af41f09edb1931305efd33',
+    'www.salesforce.com/it/events/conf/webinars/2566018': '974c3eedf4bc47d7829eec585ef551dc',
+    'www.salesforce.com/it/events/conf/webinars/2624962': 'fbc4c88b038941e991d8e47aa254804b',
+    'www.salesforce.com/it/events/conf/webinars/2582384': '797afed8d4f8435fb67a650844d0fc6a',
+    'www.salesforce.com/it/events/conf/webinars/2582645': '0af810d8533c4f96bf65247b1d19acc5',
+    'www.salesforce.com/it/events/conf/webinars/2582690': '20e0f8d8530a4082b2df1b1b25bca8a4',
+    'www.salesforce.com/eu/events/conf/webinars/2588673': '00a26a0e709e42919bc6997d9726bff6',
+    'www.salesforce.com/eu/events/conf/webinars/2588761': '1d986fee337242c185142d5ebdd51256',
+    'www.salesforce.com/eu/events/conf/webinars/2588799': '5b8953a8bff8408bba2656621ac15520',
+    'www.salesforce.com/eu/events/conf/webinars/2588715': '29040a4877c94362be981cd4a6ff9c2e',
+    'www.salesforce.com/eu/events/conf/webinars/2588827': '09b9b96092604025af3f4a4f9c4e3e6a',
+    'www.salesforce.com/eu/events/conf/webinars/2588908': '446e5685c09441e98e8be42fb7fb1f7d',
+    'www.salesforce.com/fi/form/event/conf/b2b-2': 'f25a30e663b248ac81b6fc8399717a4d',
+    'www.salesforce.com/fi/form/event/conf/it-2': 'b12d63e9c63349c6b61edfdbc96df609',
+    'www.salesforce.com/fi/form/event/conf/b2c-2': '269576dea979499495d0de5af9442644',
+    'www.salesforce.com/fi/form/event/conf/service-2': 'e2f333219abb4c8d981c7595d51763a1',
+    'www.salesforce.com/fi/form/event/suomi/b2b-2': 'c6efaa3c6bfe48dfae78b58eab2e6b98',
+    'www.salesforce.com/fi/form/event/suomi/it-2': '4d9cde6fdbf04138881ed0616fc4da08',
+    'www.salesforce.com/fi/form/event/suomi/b2c-2': '6a060950240d4848a3761900134501cd',
+    'www.salesforce.com/fi/form/event/suomi/service-2': 'be24b0d01d704162b4416ce920ad0efa',
+    'www.salesforce.com/fi/events/salesforce-live-suomi': '18476dec0938424c84a7efff7c429194',
+    'www.salesforce.com/fr/resources/way-tv': 'bb763344b3f44b188b9a27bd043800b8',
+    'www.salesforce.com/se/form/event/salesforce-live-sweden/kundservice': '007faa3184574918bf6c97c361ba7b58',
+    'www.salesforce.com/se/form/event/salesforce-live-sweden/b2c': 'a387f1cdb7b6403b9116b278906b23ff',
+    'www.salesforce.com/se/form/event/salesforce-live-sweden/b2b': '809e03ad8cf147018648e3f5e6568550',
+    'www.salesforce.com/se/form/event/salesforce-live-sweden/tableau': 'fc85c45048df4e49b16d1bf41669fc6f',
+    'www.salesforce.com/eu/events/conf/webinars/2784186': '416cff68841c401fbfe36fd885126a03',
+    'www.salesforce.com/eu/events/conf/webinars/2784169': 'a8822850cb334b49a4db638d76022af6',
+    'www.salesforce.com/eu/events/conf/webinars/2784177': '40dc3cfdbf684c9b9a0e3a547206ee9f',
+    'www.salesforce.com/eu/events/conf/webinars/2784197': 'cf52c69f42454ad2aff92d0f3c0ffbd5',
+    'www.salesforce.com/eu/events/conf/webinars/2784205': '8f287546d76b411cbd65e1f4a1de984f',
+    'www.salesforce.com/eu/events/conf/webinars/2783532': '0a5a92c9c5b54fa2985355b180c3996c',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2784186': 'ee6acdfad9ce415eb72e210ba4535b02',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2784169': '58228cc5ef124aee90b3a9092a19b2df',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2784177': 'faa2697b989c4d13b136359ed7e4f6bd',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2784197': '1f988b64b6404f5387beb5d28311d926',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2784205': '5c06321d2b734efcab7f21994bc9b2e3',
+    'www.salesforce.com/eu/form/events/webinars/form-rss/2783532': 'a9de1d03fcff4a6db964b17e4630c4c2',
+    'www.salesforce.com/eu/form/event/salesforce-live-denmark/finserv': 'e452e37d64da41c8bd22e455bd97201c',
+    'www.salesforce.com/eu/form/event/salesforce-live-denmark/manufacturing': '8e43c12901f4409eba1703ec450bd226',
+    'www.salesforce.com/eu/form/event/salesforce-live-denmark/retail': '3257d5bf8c6c4e4b91c0180a702306a4',
+    'www.salesforce.com/eu/form/event/salesforce-live-denmark/life-science': '63d9d1c7f6634b60ae598d6166aa1480',
+    'www.salesforce.com/eu/form/event/salesforce-live-denmark/analytics': '5ee4cedc06b44947aecda82abd303915',
+    'www.salesforce.com/uk/resources/small-business': 'f329034239e84e39b02474aaea906ac3',
+    'www.salesforce.com/uk/campaign/sem/small-business-solutions': '926590448ad044b68e42001315385b7b',
+    'www.salesforce.com/uk/form/demo/demo-smb.jsp': 'a747c37d5e8d4a4a907d29a3d40a0118',
+    'www.salesforce.com/uk/form/signup/freetrial-sales-essentials.jsp': '844b8556a54d4209b0f41bb2bb2bbaea',
+    'www.salesforce.com/uk/form/contact/callback': 'adff8ec063ef4c84a454a32906d341b8',
+    'www.salesforce.com/uk/resources/sales': 'e1041bebee164fee82fccc8b149af024',
+    'www.salesforce.com/uk/products/sales-cloud/overview': '200bac53057e480fa50412a3dfab6624',
+    'www.salesforce.com/uk/form/demo/demo-sales': 'a6eecee5ebcc49a5ba691a8f79d13ce0',
+    'www.salesforce.com/uk/form/signup/testdrive.jsp': 'a6f666798957451499de96bccdda9a71',
+    'www.salesforce.com/uk/form/signup/freetrial-sales-ee': 'a19ef3c488f64e169c0f1fb1df2ede9c',
+    'www.salesforce.com/uk/resources/service': '9c3829b372264862ae8d14317c63bc5d',
+    'www.salesforce.com/uk/products/service-cloud/overview': 'e947a579b58e44a396229567bf9522a4',
+    'www.salesforce.com/uk/form/demo/demo-service': '5cfc72126ac44cc89a4c933ca48038c1',
+    'www.salesforce.com/uk/form/signup/service-guided-tour': '967b52a77fee4fdb8c984956d809ee77',
+    'www.salesforce.com/uk/form/signup/freetrial-service': 'd771256cb8804ade87cd7f2d3db72395',
+    'www.salesforce.com/uk/resources/marketing': 'e3b8a61c3796448e9aec53714ec1c9ad',
+    'www.salesforce.com/uk/products/marketing-cloud/overview': 'a2a6632c08e24326bc81cf1c78acb3f8',
+    'www.salesforce.com/uk/form/demo/demo-marketing': '3fe32221a2a24aa98e060d6ac52dd125',
+    'www.salesforce.com/uk/form/marketingcloud/guided-tour': 'b329e88d68d94dfd9da7f785a3d1ed98',
+    'www.salesforce.com/uk/form/contact/marketingcloud_contactme': '765808f12c8c40fc81f257729224e043',
+    'www.salesforce.com/uk/resources/app-development': 'd9f81a07fc7c426389d27c09f10467b0',
+    'www.salesforce.com/uk/products/platform/overview': 'e0e9ec85dece4b53ba2ba02b84532f8d',
+    'www.salesforce.com/uk/form/demo/platform-overview': '028684d888e14651b4350ae3f3bca82f',
+    'www.salesforce.com/uk/form/platform/guided-tour': '15573bf4a9d240e3af4abfa0e82ef411',
+    'www.salesforce.com/uk/form/signup/freetrial-platform': '06ca52df8792448dbe80a1bcaf8d5ea2',
+    'www.salesforce.com/uk/form/commerce/commerce-cloud-digital-demo': 'a41f1471098d4b499bafa90adc91809d',
+    'www.salesforce.com/uk/form/commerce/b2b-commerce-demo': '9e780a3aeff249a594fccfcfc7ac54e9',
+    'www.salesforce.com/uk/form/contact/contactme-commerce': '4239961be77d4e3fa501437db97dedb3',
+    'www.salesforce.com/uk/solutions/industries/healthcare/overview': 'a209a5d020224534aecc57e0a1302817',
+    'www.salesforce.com/uk/solutions/industries/healthcare/health-cloud': '68276462ab014da28cf792b93f4ad975',
+    'www.salesforce.com/uk/solutions/industries/healthcare/life-sciences': '7552c5a7370d41b985d57e531563c6c3',
+    'www.salesforce.com/uk/products/health-cloud/overview': '0fa7229cd8394c67b5fdf40a2cc62661',
+    'www.salesforce.com/uk/form/industries/health-demo.jsp': '53ef91ba26944316b0441ede5b3f2039',
+    'www.salesforce.com/uk/resources/media': '700e78034f0d469482aad53a4f20ee3a',
+    'www.salesforce.com/uk/form/industries/media-demo.jsp': 'e599cdaaa99148ccb5236b7e30ec2c44',
+    'www.salesforce.com/uk/resources/utilities': 'a234bf15c1294c34b1050bf47bdde2b5',
+    'www.salesforce.com/uk/solutions/industries/utilities/overview': '6886b50bdf87435a98da538d45bc258c',
+    'www.salesforce.com/uk/form/contact/contactme-industries': '74b94cba6430483fb8b881ad3defe4aa',
+    'www.salesforce.com/fr/form/conf/sales-process': '8f5904621a5b4c2bbf3d69463f061a08',
+    'www.salesforce.com/fr/form/demo/conf/demo-sales': 'd29b8bf535b94cba83a25ec774b7c6a7',
+    'www.salesforce.com/fr/form/conf/state-of-service': '4f0d203449754aafb7abe3ef51a0d06e',
+    'www.salesforce.com/fr/form/demo/conf/demo-service': '0956fe49649b4ba0b886e342197d6bdc',
+    'www.salesforce.com/fr/form/conf/state-of-marketing': '248faec52e4f43eca87510764825e777',
+    'www.salesforce.com/fr/form/conf/connected-shoppers-report': '9d3e755ff108493b9b10f839f3961f73',
+    'www.salesforce.com/fr/form/demo/conf/demo-marketing': '7ed41d7bdfe5451489b9a839ba46fd44',
+    'www.salesforce.com/fr/form/conf/state-of-connected-customer': '2972374bbcf24f0eb5220f6a427bc951',
+    'www.salesforce.com/fr/form/demo/conf/demo-commerce': 'e4516fc3f3d84f72a921868f91f64363',
+    'www.salesforce.com/fr/form/conf/it-guide': '9150343fec0349dea99bfbf805a10db8',
+    'www.salesforce.com/fr/form/conf/guide-du-responsable-it': '39965023aac24df18a400ddda4334f8e',
+    'www.salesforce.com/fr/form/demo/conf/demo-platform': 'f0de0076afc64493958a6355462aa26f',
+    'www.salesforce.com/fr/form/demo/demo-platform': '1439d7ea3b334ab1a8623f24c90db6c6',
+    'www.salesforce.com/eu/solutions/industries/manufacturing/overview': 'b2e0c21a2b9d4a5d91f9dee5d7b7b1bb',
+    'www.salesforce.com/eu/form/conf/ebook-analytics-value-chain': '12cc06c3717d4253b915f2876a8a7856',
+    'www.salesforce.com/eu/form/conf/next-level-customer-experience-ebook': 'b673b286568b40e1b3d24d7e3a39f26f',
+    'www.salesforce.com/es/solutions/industries': 'c57c5643cd5443c794c0bd0b1c0b0c92',
+    'www.salesforce.com/es/solutions/small-business-solutions/overview': '348404f94df94aa7babd17e0e7481939',
+    'www.salesforce.com/solutions/salesforce-for-startups/overview': '7d51607d388349ca955d7707a1d158d6',
+    'www.salesforce.com/es/solutions/by-role/salesforce-for-sales': '7f7e490712c44e529da23b96f8526784',
+    'www.salesforce.com/es/solutions/by-role/salesforce-for-service': 'f77e025154f8405494fa5c59bd689a85',
+    'www.salesforce.com/es/solutions/by-role/salesforce-for-marketing': '7313d519a64745b6b46aa1dd2689f508',
+    'www.salesforce.com/es/solutions/by-role/salesforce-for-it': '56b3eba9386c4ed0857e8b6f7d936b4f',
+    'www.salesforce.com/es/solutions/covid-19-response/overview': '1f780976891949258270c9fc6ae2864a',
+    'www.salesforce.com/es/products/einstein/overview': 'f33a27661ffb4997a9d5f1cd6c510313',
+    'www.salesforce.com/es/solutions/mobile/overview': 'b2763e9bf3d34f63b417031e6122362f',
+    'www.salesforce.com/es/products/quip/overview': '0d6e676c2e90441d99ccdf3623129508',
+    'www.salesforce.com/es/blog': '652ebf680eac4c6f91c8645442232f5b',
+    'www.salesforce.com/es/products': '98e4741838bb4b868e720f66c914987a',
+    'www.salesforce.com/es/campaign/sem/salesforce-products': 'c1a04bc7be95489fb0519ea3381b31d3',
+    'www.salesforce.com/es/campaign/sem/sales-cloud': '9184f7128d504dada59232f5a23f0242',
+    'www.salesforce.com/es/campaign/sem/service-cloud': 'cab9b8139641400990e1f12fdbd99c58',
+    'www.salesforce.com/es/campaign/sem/worlds-number-one-CRM': '6ee056ef445c4a1ca9644fd962b9e24b',
+    'www.salesforce.com/es/cro/sem/salesforce-products': '1c333eb75e1949fc903927719c68e621',
+    'www.salesforce.com/eu/blog/2020/09/becoming-retail-leadership-series': '8ae968d4107e47d7a0fe808e75075a19',
+    'www.salesforce.com/eu/blog/2020/02/4-trends-from-the-connected-shoppers': '9871dab9787f48d78d7f72d6ed165ba0',
+    'www.salesforce.com/uk/campaign/sem/commerce-cloud': 'c353ac2ade9f4d4fada7a9a9000c414e',
+    'www.salesforce.com/uk/blog/category/commerce.html': 'afa472bb9c5d4c64991157b6413204d8',
+    'www.salesforce.com/uk/resources/commerce': '1068afd308ed46a69df4eef1f20245e1',
+    'www.salesforce.com/uk/solutions/by-role/commerce': 'bbfda584da6e468cb419ca2eabdb9f22',
+    'www.salesforce.com/uk/products/commerce-cloud/overview': '51c5493cdf7a4bd5ab68b072815975f7',
+    'www.salesforce.com/uk/blog/category/financial-services.html': '47341b0712ee4288bec4e0e23a452b7d',
+    'www.salesforce.com/uk/resources/financial-services': 'b21437fef7a045ac85a06c456d3d97d9',
+    'www.salesforce.com/uk/products/financial-services-cloud/overview': '8e0331fb40674b1db0ef5d31ba811bac',
+    'www.salesforce.com/uk/form/industries/financialservices-demo': '36d2d968cbee4e95a7d433e954b471c2',
+    'www.salesforce.com/uk/blog/category/manufacturing.html': '5b44233c780449bea01a383c77de7a0f',
+    'www.salesforce.com/uk/resources/manufacturing': '35b2ede2c2f54ab5b8a605cddb0dddf4',
+    'www.salesforce.com/uk/products/manufacturing-cloud/overview': 'cb899b6e5af84f4aabd6c69d49f7c50b',
+    'www.salesforce.com/uk/form/industries/manufacturing/manufacturing-cloud-demo': 'fde6f45e54bf447fa4720a18b828b3e8',
+    'www.salesforce.com/uk/blog/category/retail.html': 'eed591cb034b4936bc6e1310f97986d7',
+    'www.salesforce.com/uk/resources/retail': 'e284bf51fb7745dbb2a71e14d30d966d',
+    'www.salesforce.com/uk/products/consumer-goods-cloud/overview': '44621f204be24f5ba1247239a4e6aa48',
+    'www.salesforce.com/uk/form/industries/salesforce-retail-demo': '995475050b6547ae95187712eb914ec8',
+    'www.salesforce.com/uk/solutions/industries/professional-services/overview': '0894eda33edf403191baa09178d6c057',
+    'www.salesforce.com/uk/solutions/industries/recruitment/overview': '053dac674869487682d2f83b12f7ae54',
+    'www.salesforce.com/uk/solutions/industries/real-estate/overview': '98f1f6be38ad4b2284994ad9c89c0dd1',
+    'www.salesforce.com/uk/solutions/industries/legal/overview': '6997a011e1ac4b6a83c08a97103b9f14',
+    'www.salesforce.com/uk/solutions/industries/financial-services/overview': 'dd87f7b8b64442389d3b390c14f747df',
+    'www.salesforce.com/uk/solutions/industries/manufacturing/overview': '43c549b6c4bc4033926d59ec4e688533',
+    'www.salesforce.com/uk/solutions/industries/retail/overview': 'a9e87ee4c27e4293aee4ec9a7c56a587',
+    'www.salesforce.com/nl/blog/category/mkb.html': '8a58c52161234cb4a08263edbec14c82',
+    'www.salesforce.com/nl/solutions/small-business-solutions': 'd57d1c24aec7406db458f106b0d39dd6',
+    'www.salesforce.com/nl/blog/2020/12/crm-een-onmisbare-tool-voor-het-mkb.html': '6e8d4eb1f094444ab666d220790e0e87',
+    'www.salesforce.com/nl/blog/2020/12/nederlandse-mkb-positief-over-toekomst.html': 'a142bf2e75ba40deaec3346743eb02f3',
+    'www.salesforce.com/nl/blog/2020/12/veiligheid-klant-online-klantinteracties-hoogste-prioriteit.html': 'a87038d6d1c24254be5d078a8f19f6cc',
+    'www.salesforce.com/nl/blog/2020/12/midden-kleinbedrijf-trendonderzoek.html': '7c81b70eeda843f5bf3a1a3e6f8a7a9a',
+    'www.salesforce.com/nl/blog/2020/11/je-bedrijf-slim-laten-groeien-3-tips-voor-het-mkb.html': '9ba24fcfe3a04e68a805a5a4b981d1cb',
+    'www.salesforce.com/nl/blog/2020/11/ai-voor-het-mkb.html': '8b9e100b5ab5492ca60258a702d90013',
+    'www.salesforce.com/nl/blog/2020/11/een-bedrijf-starten-tijdens-een-crisis.html': 'dbd4a2023d2147b4a70c8548a5473e75',
+    'www.salesforce.com/nl/blog/2020/11/social-media-strategie-voor-het-mkb.html': '219fdb2c9518455eb8a2dd2ee5cc13cf',
+    'www.salesforce.com/nl/blog/2020/07/smb-continue-excellent-customer-service.html': 'c6b6f79f00cb4b38b4318fc9a74aabd2',
+    'www.salesforce.com/nl/blog/2020/07/small-business-online-relevance.html': '5c72079508fd48239f64b055ec844d5b',
+    'www.salesforce.com/nl/blog/2020/08/gratis-factuurgenerator-voor-het-smb.html': 'd8e1a26318fa4cb9815c10f5ba8a1f7f',
+    'www.salesforce.com/nl/form/pdf/crm-smb-recipe-for-success': '8b2614299589423b9c11b60ba39b3f78',
+    'www.salesforce.com/nl/form/pdf/2020-small-business-trends-report': 'f1df00f8aeeb4c79b978db2cc9d5bd1b',
+    'www.salesforce.com/nl/form/pdf/de-complete-crm-handleiding': 'adad37ad5c0248fa99e9a03270cf26c5',
+    'www.salesforce.com/nl/form/smb/cri-tool': '1276fd2173e54bca92ede62aa23b3d8d',
+    'www.salesforce.com/nl/form/demo/demo-smb': 'ecbfab23ac914bc6bb204d21df5d3c91',
+    'www.salesforce.com/nl/form/signup/freetrial-sales-essentials': 'e732fdda3264423396216d1fde83825a',
+    'www.salesforce.com/nl/learning-centre/crm/crm-systems': '6c322a78fb6743e685c6c334002dbb6b',
+    'www.salesforce.com/nl/learning-centre/crm/what-is-crm': 'c1fba6785d1841c5b9c717a9f935c513',
+    'www.salesforce.com/nl/blog/2017/06/wat-is-artificial-intelligence': 'bcefbd4e8b1f4b39a8b547b62058ffa7',
+    'www.salesforce.com/nl/blog/2019/10/wat-is-een-api': 'deca62febfe14d2aae050ad8bafae3ec',
+    'www.salesforce.com/nl/learning-centre/tech/saas': '99ef1c79207c4c55b60328d2c8ed7774',
+    'www.salesforce.com/nl/campaign/sem/service-cloud': '0ab31f8c784c46e38b5216f512168c1d',
+    'www.salesforce.com/nl/campaign/sem/salesforce-products': '569fb6793f374c3294f7883b176117a7',
+    'www.salesforce.com/nl/campaign/sem/sales-cloud': '46ed86a099bb42149848ddc92657dee1',
+    'www.salesforce.com/nl/campaign/sem/marketing-cloud': '4ceb1a0f760d47089da70c37fa297628',
+    'www.salesforce.com/nl/campaign/sem/commerce-cloud': 'd0b89215f7404071a46055cd8b6d71d3',
+    'www.salesforce.com/no/form/sem/crm-display-2013': 'd9069776933b42119f77e0589712ffe5',
+    'www.salesforce.com/no/form/sem/conf/crm-display-2013': 'e2110ec7215049b39f6b987f49eb0da5',
+    'www.salesforce.com/no/form/sem/call-center-demo_optb1': 'd1478b1b352c460f984891ebbf1864ec',
+    'www.salesforce.com/no/campaign/sem/marketing-cloud': '14cd971631ba4b4aa10c6876d8e76fce',
+    'www.salesforce.com/no/campaign/sem/commerce-cloud': '2e66ce3906614f8da1bbdd6da5b8e887',
+    'www.salesforce.com/eu/form/pdf/crm-smb-recipe-for-success': '286e885ec3b74840818da746b581672b',
+    'www.salesforce.com/eu/form/pdf/2020-small-business-trends-report': '5ca04da18c5a4fd8877d13f84631e0eb',
+    'www.salesforce.com/eu/form/smb/cri-tool': 'ae54d4ec44364cdb84277bcf515f886b',
+    'www.salesforce.com/eu/form/signup/freetrial-sales-essentials': 'e3c5febc6769423d9c750e31185f5cf0',
+    'www.salesforce.com/eu/form/demo/demo-sales': '1728c97b43b640839b9d158c70a49c2f',
+    'www.salesforce.com/eu/blog/category/small-business.html': '379b1a2d4f2747f39ade0114e680865b',
+    'www.salesforce.com/eu/solutions/small-business-solutions': 'c00500db26f14bd18088569c9c1dd6af',
+    'www.salesforce.com/fi/campaign/sem/commerce-cloud': '4f2acc8bb8204b9f8d102676013a5ab4',
+    'www.salesforce.com/fi/campaign/sem/marketing-cloud': 'ef9894943526486da2772767c052ac79',
+    'www.salesforce.com/fi/form/sem/call-center-demo_optb1': '346bca760e5a4b4e9f81c0bb7a1a1d1b',
+    'www.salesforce.com/fi/blog/2018/salesforce-essentials-pienille-yrityksille.html': '1baad33644dd4801a7b1907dec47c45d',
+    'www.salesforce.com/fi/blog/2019/CRM-startup.html': 'caf937ea76e34a30bb9d9e06816d3dff',
+    'www.salesforce.com/fi/blog/2020/pienten-ja-keskisuurten-yritysten-bisnestrendit.html': '9beb83dde65f46b7bbd99b27c079619c',
+    'www.salesforce.com/fi/blog/2020/crm-tehostaa-pk-yritysten-arkea.html': '8778ccc992a44376827fa2833b386e0c',
+    'www.salesforce.com/fi/blog/2020/vuoden-2020-koonti.html': '45e323c592f14522ab1934647f5ed54c',
+    'www.salesforce.com/fi/form/sem/crm-display-2013': '9d713ca6eaeb491584799772fdbf31df',
+    'www.salesforce.com/fi/form/pdf/crm-smb-recipe-for-success': '7f48a63322d8489ea6f9119df256d8bb',
+    'www.salesforce.com/dk/form/sem/crm-display-2013': '9fea7c62e8424f7eb51c86d92fedaed4',
+    'www.salesforce.com/dk/form/sem/conf/crm-display-2013': '08b65901a12e46e4a5498cba170fafc0',
+    'www.salesforce.com/dk/form/sem/call-center-demo_optb1': '306e46aed2f14c3a804c2e8e829b5bc4',
+    'www.salesforce.com/dk/campaign/sem/marketing-cloud': 'd614b5f74f534b2c8f90c019092a1666',
+    'www.salesforce.com/dk/campaign/sem/commerce-cloud': 'c174f43690614809a684028ea4ab8acf',
+    'www.salesforce.com/se/blog/2020/10/ai-for-sma-foretag.html': 'e4e4788bd7444aa98f53862da49057c1',
+    'www.salesforce.com/se/blog/2020/10/starta-eget-under-en-kris.html': 'a2568e20e3dc4e7b8c3e44b6c6850adf',
+    'www.salesforce.com/se/blog/2020/10/pr-strategi-for-sociala-medier.html': '972a4e021d4244119dd2a8404bb61797',
+    'www.salesforce.com/se/blog/2020/07/smb-email-nurture-journeys1.html': 'e14afe50833248c28a490bf8f624439f',
+    'www.salesforce.com/se/blog/2020/08/small-businesses-win-customer-loyalty.html': 'f4eeb17509b7495db94ec6d7889a4664',
+    'www.salesforce.com/se/blog/2020/03/smb-sales-team-compassion.html': 'e0a37b2f5b2d456ebd50945a6ac8de11',
+    'www.salesforce.com/se/blog/2020/07/master-email-pitches-smb.html': 'caeb29343f464443943cbc0630e33f1b',
+    'www.salesforce.com/se/blog/2020/07/invoice-generator-for-sme.html': 'bfbc91e03d944e8eae6b1ae82b1ffd0f',
+    'www.salesforce.com/se/solutions/small-business-solutions': '3c2d683d4c0842b6b4622087979e7e4c',
+    'www.salesforce.com/se/form/pdf/din-kompletta-handbok-i-crm': 'bb5e6b2f79c2494bb6a4f36a0b4af8af',
+    'www.salesforce.com/se/form/pdf/crm-smb-recipe-for-success': '89c9063588d145dd85143ca14fa5a8d1',
+    'www.salesforce.com/se/form/signup/freetrial-sales-essentials': '1d6f0c91596a40089c097c04ec237cf1',
+    'www.salesforce.com/se/form/demo/demo-sales': 'd1992828e89146d9972a072a042028d1',
+    'www.salesforce.com/se/blog/2020/07/build-strong-small-business-sales-team': '40b08d4f3af54d689f42dc20138bd3c6',
+    'www.salesforce.com/se/form/sem/crm-display-2013': '3456cc97408b40ecb1e024f4cbce9abd',
+    'www.salesforce.com/se/campaign/sem/service-cloud': '9ee89075c0a3451e8063a7b7512e2720',
+    'www.salesforce.com/se/campaign/sem/salesforce-products': 'bc57a1fca6c6427f9b76be9e24abe601',
+    'www.salesforce.com/se/campaign/sem/sales-cloud': 'c2197d578e564076b41a2256d7fa2823',
+    'www.salesforce.com/se/campaign/sem/marketing-cloud': '888b75027cc747f5943ddee832f2ebb0',
+    'www.salesforce.com/se/campaign/sem/commerce-cloud': 'cc9c1ce80b964c659c5af22364f8a4b0'
+    /*jshint ignore:end */
+  };
+
+
+  // be sure page loads before running
+  if (document.readyState !== 'loading') {
+    dxUpx();
+  } else {
+    document.addEventListener('DOMContentLoaded', function() {
+      dxUpx();
+    });
+  }
+
+})();

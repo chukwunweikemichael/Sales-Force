@@ -1,0 +1,3 @@
+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
+git remote add origin https://github.com/chukwunweikemichael/Salesforce.git
+git push -u origin main.
